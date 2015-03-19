@@ -29,6 +29,7 @@ module FontArt
           copy_glyph_map
           copy_glyphs
           copy_gsub_table
+          binding.pry
           build_synth_font
         rescue
           binding.pry
@@ -55,7 +56,7 @@ module FontArt
 
       custom_glyphs = custom_order.css('GlyphID')
 
-      while custom_glyphs.last.attribute('name').value.include? 'uniF'
+      while custom_glyphs.last.attribute('name').value.include? 'uni'
         glyph = custom_glyphs.pop
         last_id = synth_order.css('GlyphID').last.attribute('id').value.to_i
         glyph.set('id', (last_id + 1).to_s)
