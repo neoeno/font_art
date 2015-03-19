@@ -1,0 +1,8 @@
+# Ignore built fonts
+builds/*.ttf
+
+# Ignore illustrator files
+glyph-sources
+
+# Ignore icomoon font
+fonts/icomoon.ttf
