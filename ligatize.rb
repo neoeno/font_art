@@ -10,15 +10,6 @@ STOCK_FONT_PATH = File.join(ROOT_FOLDER, 'DroidSans.ttf')
 
 @glyphs_added = []
 
-def make_custom_svg_font
-  Fontcustom::Base.new(
-    input: File.join(ROOT_FOLDER, 'glyphs'),
-    font_em: FONT_EM_SIZE,
-    no_hash: true,
-    output: File.join(ROOT_FOLDER, 'tmp', 'custom')
-  ).compile
-end
-
 def decompile_stock_font
   decomp_path = File.join(ROOT_FOLDER, 'tmp', 'stock_decompiled')
   FileUtils.mkpath decomp_path
@@ -26,7 +17,7 @@ def decompile_stock_font
 end
 
 def decompile_custom_font
-  custom_font_path = File.join(ROOT_FOLDER, 'tmp', 'custom', 'fontcustom.ttf')
+  custom_font_path = File.join(ROOT_FOLDER, 'icomoon.ttf')
   decomp_path = File.join(ROOT_FOLDER, 'tmp', 'custom_decompiled')
   FileUtils.mkpath decomp_path
   system("ttx -s -d \"#{decomp_path}\" \"#{custom_font_path}\"")
@@ -44,7 +35,7 @@ def get_custom_and_synth_table(table_type)
 
   [
     Oga.parse_xml(
-      File.open(File.join(custom_path, 'fontcustom.' + table_type + '.ttx'))),
+      File.open(File.join(custom_path, 'icomoon.' + table_type + '.ttx'))),
     Oga.parse_xml(
       File.open(File.join(synth_path, 'DroidSans.' + table_type + '.ttx')))
   ]
@@ -61,7 +52,7 @@ def copy_glyph_order
 
   custom_glyphs = custom_order.css('GlyphID')
 
-  until custom_glyphs.last.attribute('name').value == 'space'
+  while custom_glyphs.last.attribute('name').value.include? 'uniF'
     glyph = custom_glyphs.pop
     last_id = synth_order.css('GlyphID').last.attribute('id').value.to_i
     glyph.set('id', (last_id + 1).to_s)
@@ -102,12 +93,44 @@ def copy_glyphs
     synth_glyphs.css('glyf').first.children << custom_glyphs.css('[name="' + name + '"]').first
   end
 
-  write_synth_table('_h_m_t_x', synth_glyphs)
+  write_synth_table('_g_l_y_f', synth_glyphs)
+end
+
+def xml_elem(xml)
+  Oga.parse_xml(xml).children.first
+end
+
+def copy_gsub_table
+  custom_gsub, synth_gsub = get_custom_and_synth_table('G_S_U_B_')
+
+  synth_gsub.css('LookupList').first.children = custom_gsub.css('LookupList').first.children
+
+  write_synth_table('G_S_U_B_', synth_gsub)
+end
+
+def remove_hdmx
+  # idk why, FIXME?
+  synth_path = File.join(ROOT_FOLDER, 'tmp', 'synth_decompiled')
+
+  FileUtils.rm(File.join(synth_path, 'DroidSans._h_d_m_x.ttx'))
+
+  root_table = Oga.parse_xml(
+    File.open(File.join(synth_path, 'DroidSans.ttx')))
+
+  root_table.css('hdmx').first.remove
+
+  File.write(File.join(synth_path, 'DroidSans.ttx'), root_table.to_xml)
+end
+
+def build_synth_font
+  synth_path = File.join(ROOT_FOLDER, 'tmp', 'synth_decompiled', 'DroidSans.ttx')
+  font_path = File.join(ROOT_FOLDER, 'builds', 'synth.ttf')
+  FileUtils.rm(font_path) if File.exist? font_path
+  system("ttx -o \"#{font_path}\" \"#{synth_path}\"")
 end
 
 FileUtils.rm('.fontcustom-manifest.json') if File.exist? '.fontcustom-manifest.json'
 FileUtils.remove_dir(File.join(ROOT_FOLDER, 'tmp'))
-make_custom_svg_font
 decompile_stock_font
 decompile_custom_font
 prepare_synth_font
@@ -115,3 +138,6 @@ copy_glyph_order
 copy_glyph_dimensions
 copy_glyph_map
 copy_glyphs
+copy_gsub_table
+# remove_hdmx
+build_synth_font
