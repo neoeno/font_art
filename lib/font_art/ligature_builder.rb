@@ -29,7 +29,7 @@ module FontArt
           copy_glyph_map
           copy_glyphs
           copy_gsub_table
-          binding.pry
+          system("subl -w .")
           build_synth_font
         rescue
           binding.pry
