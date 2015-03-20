@@ -29,7 +29,7 @@ module FontArt
           copy_glyph_map
           copy_glyphs
           copy_gsub_table
-          system("subl -w .")
+          system("subl -w .") # Sublime doesn't actually terminate, surprise...
           build_synth_font
         rescue
           binding.pry
